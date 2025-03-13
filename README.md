@@ -18,6 +18,7 @@ A **highly secure and efficient** National ID (NID) management system built in C
   - [🐧 Linux Installation](#-linux-installation)
 - [🔹 Usage](#-usage)
 - [🔹 Database & Security](#-database--security)
+- [🔹 Security System](#-security-system)
 - [🔹 API Integration (Future)](#-api-integration-future)
 - [🔹 Roadmap](#-roadmap)
 - [🔹 Contribution](#-contribution)
@@ -44,6 +45,15 @@ A **highly secure and efficient** National ID (NID) management system built in C
 - **Real-Time Logging**: Stores up to **1,000 audit entries** for accountability.
 - **Data Integrity**: Automatic timestamps (`created_at`, `last_modified`).
 - **Input Sanitization**: Buffer overflow protection via fixed-size inputs.
+
+---
+
+## 🔹 Security System
+- **AES-256 & RSA Encryption**: Ensures secure storage of sensitive data.
+- **Two-Factor Authentication (2FA)**: Future implementation for extra security.
+- **Access Control Lists (ACLs)**: Restricts data access based on user roles.
+- **Real-Time Intrusion Detection**: Logs and prevents unauthorized access.
+- **Secure Communication**: Uses OpenSSL for encrypted data transmission.
 
 ---
 
