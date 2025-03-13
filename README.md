@@ -12,9 +12,8 @@ A **highly secure and efficient** National ID (NID) management system built in C
 ## 📖 Table of Contents
 - [🔹 Features](#-features)
 - [🔹 Technical Highlights](#-technical-highlights)
-- [🔹 Security System](#-security-system)
 - [🔹 Installation Guide](#-installation-guide)
-  - [🖥 Windows Installation](#-windows-installation)
+  - [Windows](#windows-installation)
   - [🍏 macOS Installation](#-macos-installation)
   - [🐧 Linux Installation](#-linux-installation)
 - [🔹 Usage](#-usage)
@@ -24,6 +23,7 @@ A **highly secure and efficient** National ID (NID) management system built in C
 - [🔹 Contribution](#-contribution)
 - [🔹 License](#-license)
 - [🔹 Frequently Asked Questions (FAQ)](#-frequently-asked-questions-faq)
+- [📋 Future Enhancements](#-future-enhancements)
 
 ---
 
@@ -47,29 +47,6 @@ A **highly secure and efficient** National ID (NID) management system built in C
 
 ---
 
-## 🔹 Security System
-Our **Secure NID Management System** implements multiple layers of security:
-
-🔑 **Encryption & Hashing**
-- **AES-256 Encryption**: Protects stored citizen data from unauthorized access.
-- **RSA Encryption**: Secures data transmission between system components.
-- **SHA-256 Password Hashing**: Prevents password leaks and brute-force attacks.
-
-🛡 **Access Control & Authentication**
-- **Role-Based Access Control (RBAC)**: Ensures only authorized users can access specific data.
-- **Multi-Factor Authentication (Planned Feature)**: Enhances security by requiring OTP verification.
-
-📝 **Logging & Auditing**
-- **Audit Logs**: Tracks all user actions for compliance and forensic analysis.
-- **Intrusion Detection**: Detects multiple failed login attempts and locks accounts temporarily.
-
-🚨 **Security Best Practices**
-- **Regular Updates**: Keeps dependencies and cryptographic libraries up-to-date.
-- **Code Reviews & Penetration Testing**: Ensures system integrity against attacks.
-- **Secure Coding Standards**: Mitigates risks such as SQL injection and buffer overflow.
-
----
-
 ## 🔹 Installation Guide
 
 ### 🖥 Windows Installation
@@ -88,6 +65,7 @@ Our **Secure NID Management System** implements multiple layers of security:
    ```
 
 ### 🍏 macOS Installation
+
 1. **Install Xcode Command Line Tools**
    ```sh
    xcode-select --install
@@ -106,6 +84,7 @@ Our **Secure NID Management System** implements multiple layers of security:
    ```
 
 ### 🐧 Linux Installation
+
 1. **Install GCC & OpenSSL**
    ```sh
    sudo apt update && sudo apt install gcc libssl-dev
@@ -121,21 +100,44 @@ Our **Secure NID Management System** implements multiple layers of security:
 
 ## 🔹 Frequently Asked Questions (FAQ)
 
-### Q1: Can I use this system for a real government NID database?
+**Q1: Can I use this system for a real government NID database?**
+
 No, this project is designed for educational and research purposes. It lacks legal compliance and large-scale database integration.
 
-### Q2: How can I add new authentication features?
+**Q2: How can I add new authentication features?**
+
 You can modify the authentication logic in the `authenticate_user()` function to add Multi-Factor Authentication (MFA).
 
-### Q3: How can I integrate this with a MySQL database?
+**Q3: How can I integrate this with a MySQL database?**
+
 Replace the current file-based storage with MySQL queries. You will need to link with the `libmysqlclient` library.
 
 ---
 
-## 🔹 Contribution
-Contributions are welcome! Feel free to open an issue or submit a pull request.
+## 📋 Future Enhancements
+
+- Implementing file-based storage or database integration.
+- Web or GUI-based interface for better usability.
+- Multi-level authentication with OTP verification.
+- More granular role permissions and logging improvements.
+
+---
+
+## 📌 Developed by: Neural Scope
+
+### Contributors:
+- **Arafat Rahman**
+- **Md. Meahadi Hasan**
+- **Md. Sohanur Rahman**
 
 ---
 
 ## 🔹 License
+
 This project is licensed under the [MIT License](https://opensource.org/licenses/MIT).
+
+---
+
+## 🔹 Contribution
+
+Feel free to contribute by submitting issues or pull requests. Let’s build a **secure** and **efficient** NID system together! 🚀
