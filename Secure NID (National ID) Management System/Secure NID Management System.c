@@ -202,3 +202,195 @@ void display_citizen(const Citizen *citizen) {
            citizen->mother_name, citizen->blood_group, citizen->is_active ? "Active" : "Inactive",
            ctime(&citizen->created_at), ctime(&citizen->last_modified));
 }
+
+
+
+
+
+
+// Log update activity
+            char *log_sql = "INSERT INTO audit_logs (nid, timestamp, activity_type) VALUES (?,?,?);";
+            sqlite3_stmt *log_stmt;
+            if(sqlite3_prepare_v2(db, log_sql, -1, &log_stmt, 0) == SQLITE_OK) {
+                sqlite3_bind_text(log_stmt, 1, nid, -1, SQLITE_STATIC);
+                sqlite3_bind_int64(log_stmt, 2, (sqlite3_int64)time(NULL));
+                sqlite3_bind_text(log_stmt, 3, "UPDATED", -1, SQLITE_STATIC);
+                sqlite3_step(log_stmt);
+                sqlite3_finalize(log_stmt);
+            }
+        } else {
+            printf("Failed to update citizen!\n");
+        }
+        sqlite3_finalize(update_stmt);
+    } else {
+        printf("Update failed!\n");
+    }
+}
+
+void admin_delete_citizen() {
+    char nid[20];
+    printf("Enter NID to delete: ");
+    scanf("%19s", nid);
+    clear_input_buffer();
+    
+    char *delete_sql = "DELETE FROM citizens WHERE nid = ?;";
+    sqlite3_stmt *delete_stmt;
+    
+    if(sqlite3_prepare_v2(db, delete_sql, -1, &delete_stmt, 0) == SQLITE_OK) {
+        sqlite3_bind_text(delete_stmt, 1, nid, -1, SQLITE_STATIC);
+        
+        if(sqlite3_step(delete_stmt) == SQLITE_DONE) {
+            printf("Citizen with NID %s deleted successfully!\n", nid);
+            
+            // Log deletion activity
+            char *log_sql = "INSERT INTO audit_logs (nid, timestamp, activity_type) VALUES (?,?,?);";
+            sqlite3_stmt *log_stmt;
+            if(sqlite3_prepare_v2(db, log_sql, -1, &log_stmt, 0) == SQLITE_OK) {
+                sqlite3_bind_text(log_stmt, 1, nid, -1, SQLITE_STATIC);
+                sqlite3_bind_int64(log_stmt, 2, (sqlite3_int64)time(NULL));
+                sqlite3_bind_text(log_stmt, 3, "DELETED", -1, SQLITE_STATIC);
+                sqlite3_step(log_stmt);
+                sqlite3_finalize(log_stmt);
+            }
+        } else {
+            printf("Failed to delete citizen!\n");
+        }
+        sqlite3_finalize(delete_stmt);
+    } else {
+        printf("Delete failed!\n");
+    }
+}
+
+void admin_view_audit_logs() {
+    char *sql = "SELECT nid, timestamp, activity_type FROM audit_logs ORDER BY timestamp DESC;";
+    sqlite3_stmt *stmt;
+    
+    if(sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK) {
+        printf("\nAudit Logs:\n");
+        printf("----------------------------------------\n");
+        while(sqlite3_step(stmt) == SQLITE_ROW) {
+            const char *nid = (const char*)sqlite3_column_text(stmt, 0);
+            time_t timestamp = (time_t)sqlite3_column_int64(stmt, 1);
+            const char *activity = (const char*)sqlite3_column_text(stmt, 2);
+            
+            printf("NID: %s\nActivity: %s\nTime: %s\n", 
+                   nid, activity, ctime(&timestamp));
+            printf("----------------------------------------\n");
+        }
+        sqlite3_finalize(stmt);
+    } else {
+        printf("Failed to fetch audit logs!\n");
+    }
+}
+
+void admin_menu() {
+    int running = 1;
+    while(running) {
+        printf("\nADMIN PANEL\n");
+        printf("1. Register Citizen\n");
+        printf("2. View Citizens\n");
+        printf("3. Search Citizen\n");
+        printf("4. Update Citizen\n");
+        printf("5. Delete Citizen\n");
+        printf("6. View Audit Logs\n");
+        printf("7. Logout\n");
+        printf("Choice: ");
+
+        int choice;
+        scanf("%d", &choice);
+        clear_input_buffer();
+
+        switch(choice) {
+            case 1: admin_register_citizen(); break;
+            case 2: admin_view_citizens(); break;
+            case 3: admin_search_citizen(); break;
+            case 4: admin_update_citizen(); break;
+            case 5: admin_delete_citizen(); break;
+            case 6: admin_view_audit_logs(); break;
+            case 7: running = 0; break;
+            default: printf("Invalid choice!\n");
+        }
+    }
+}
+
+// ================== MAIN PROGRAM ==================
+int main() {
+    if(!init_db()) {
+        fprintf(stderr, "Failed to initialize database!\n");
+        return 1;
+    }
+
+    OpenSSL_add_all_algorithms();
+
+    // Initialize admin user if not exists
+    char *check_admin = "SELECT COUNT(*) FROM users WHERE username = 'admin';";
+    sqlite3_stmt *stmt;
+    int admin_exists = 0;
+    
+    if(sqlite3_prepare_v2(db, check_admin, -1, &stmt, 0) == SQLITE_OK) {
+        if(sqlite3_step(stmt) == SQLITE_ROW) {
+            admin_exists = sqlite3_column_int(stmt, 0);
+        }
+        sqlite3_finalize(stmt);
+    }
+    
+    if(!admin_exists) {
+        SystemUser admin;
+        strcpy(admin.username, "admin");
+        generate_salt(admin.salt);
+        derive_key("adminpass", admin.salt, admin.password_hash);
+        admin.role = ADMIN;
+        admin.failed_attempts = 0;
+        admin.last_login = 0;
+        
+        char *insert_sql = "INSERT INTO users VALUES (?,?,?,?,?,?);";
+        if(sqlite3_prepare_v2(db, insert_sql, -1, &stmt, 0) == SQLITE_OK) {
+            sqlite3_bind_text(stmt, 1, admin.username, -1, SQLITE_STATIC);
+            sqlite3_bind_blob(stmt, 2, admin.password_hash, SHA256_DIGEST_LENGTH, SQLITE_STATIC);
+            sqlite3_bind_blob(stmt, 3, admin.salt, SALT_LEN, SQLITE_STATIC);
+            sqlite3_bind_int(stmt, 4, admin.role);
+            sqlite3_bind_int(stmt, 5, admin.failed_attempts);
+            sqlite3_bind_int64(stmt, 6, admin.last_login);
+            
+            sqlite3_step(stmt);
+            sqlite3_finalize(stmt);
+            printf("Admin user created with password 'adminpass'\n");
+        }
+    }
+
+    int running = 1;
+    while(running) {
+        printf("\nNATIONAL ID MANAGEMENT SYSTEM\n");
+        printf("1. Admin Login\n");
+        printf("2. Exit\n");
+        printf("Choice: ");
+
+        int choice;
+        scanf("%d", &choice);
+        clear_input_buffer();
+
+        if(choice == 1) {
+            char username[50], password[50];
+            printf("Username: ");
+            scanf("%49s", username);
+            printf("Password: ");
+            scanf("%49s", password);
+            clear_input_buffer();
+
+            if(authenticate_user(username, password)) {
+                printf("Login successful!\n");
+                admin_menu();
+            } else {
+                printf("Authentication failed!\n");
+            }
+        } else if(choice == 2) {
+            running = 0;
+        } else {
+            printf("Invalid choice!\n");
+        }
+    }
+
+    sqlite3_close(db);
+    EVP_cleanup();
+    return 0;
+}
