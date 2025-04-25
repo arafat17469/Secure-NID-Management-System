@@ -93,19 +93,20 @@ A **highly secure and efficient** National ID (NID) management system built in C
    ./nid_management
    ```
 
-### 🐧 Linux Installation
+## 🚀 Installation (Ubuntu/Linux)
 
-1. **Install GCC & OpenSSL**
-   ```sh
-   sudo apt update && sudo apt install gcc libssl-dev
-   ```
+### Prerequisites
+    sudo apt update
+    sudo apt install build-essential libssl-dev libsqlite3-dev
 
-2. **Compile & Run**
-   ```sh
-   gcc Secure_NID_Management_System.c -o nid_management -lssl -lcrypto
-   ./nid_management
-   ```
+## Compilation & Execution
 
+# Compile with security flags
+    nano national_id_system.c
+    gcc national_id_system.c -o national_id_system -lcrypto -lsqlite3
+
+# Run the system
+    ./national_id_system
 ---
 
 ## 🔹 Frequently Asked Questions (FAQ)
