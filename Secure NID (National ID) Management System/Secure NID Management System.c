@@ -207,65 +207,54 @@ void display_citizen(const Citizen *citizen) {
 int authenticate_user(const char *username, const char *password) {
     char *sql = "SELECT password_hash, salt FROM users WHERE username = ?;";
     sqlite3_stmt *stmt;
-    int auth_result = 0;
-
+    
     // Prepare the SQL statement
-    int rc = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL prepare error: %s\n", sqlite3_errmsg(db));
+    if(sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
+        fprintf(stderr, "Database error: Failed to prepare statement\n");
         return 0;
     }
 
     // Bind the username parameter
-    rc = sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC);
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL bind error: %s\n", sqlite3_errmsg(db));
+    if(sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC) != SQLITE_OK) {
+        fprintf(stderr, "Database error: Failed to bind parameters\n");
         sqlite3_finalize(stmt);
         return 0;
     }
 
     // Execute the query
-    rc = sqlite3_step(stmt);
-    if (rc == SQLITE_ROW) {
+    int rc = sqlite3_step(stmt);
+    if(rc == SQLITE_ROW) {
         // Get stored hash and salt
         const unsigned char *db_hash = sqlite3_column_blob(stmt, 0);
         const unsigned char *salt = sqlite3_column_blob(stmt, 1);
-        int hash_size = sqlite3_column_bytes(stmt, 0);
-        int salt_size = sqlite3_column_bytes(stmt, 1);
-
-        // Debug output (remove in production)
-        printf("Debug Info:\n");
-        printf("Username: %s\n", username);
-        printf("Stored salt size: %d\n", salt_size);
-        printf("Stored hash size: %d\n", hash_size);
-
-        if (db_hash && salt && hash_size == SHA256_DIGEST_LENGTH && salt_size == SALT_LEN) {
-            unsigned char derived_key[SHA256_DIGEST_LENGTH];
-            derive_key(password, salt, derived_key);
-
-            // Debug output (remove in production)
-            printf("Derived key: ");
-            for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
-                printf("%02x", derived_key[i]);
-            }
-            printf("\nStored hash: ");
-            for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
-                printf("%02x", db_hash[i]);
-            }
-            printf("\n");
-
-            auth_result = (memcmp(db_hash, derived_key, SHA256_DIGEST_LENGTH) == 0);
-        } else {
-            fprintf(stderr, "Invalid hash or salt format in database\n");
+        
+        // Validate data sizes
+        if(sqlite3_column_bytes(stmt, 0) != SHA256_DIGEST_LENGTH || 
+           sqlite3_column_bytes(stmt, 1) != SALT_LEN) {
+            sqlite3_finalize(stmt);
+            return 0;
         }
-    } else if (rc == SQLITE_DONE) {
-        fprintf(stderr, "User not found: %s\n", username);
-    } else {
-        fprintf(stderr, "SQL step error: %s\n", sqlite3_errmsg(db));
-    }
 
+        // Derive key from provided password
+        unsigned char derived_key[SHA256_DIGEST_LENGTH];
+        derive_key(password, salt, derived_key);
+
+        // Compare hashes
+        int result = (memcmp(db_hash, derived_key, SHA256_DIGEST_LENGTH) == 0);
+        sqlite3_finalize(stmt);
+        return result;
+    }
+    
+    // Handle cases where user not found or other errors
+    if(rc == SQLITE_DONE) {
+        sqlite3_finalize(stmt);
+        return 0;
+    }
+    
+    // Database error case
+    fprintf(stderr, "Database error: %s\n", sqlite3_errmsg(db));
     sqlite3_finalize(stmt);
-    return auth_result;
+    return 0;
 }
 
 // ================== ADMIN FUNCTIONS ==================
