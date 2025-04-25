@@ -99,13 +99,12 @@ A **highly secure and efficient** National ID (NID) management system built in C
     sudo apt update
     sudo apt install build-essential libssl-dev libsqlite3-dev
 
-## Compilation & Execution
+### Compilation & Execution
 
-# Compile with security flags
     nano national_id_system.c
     gcc national_id_system.c -o national_id_system -lcrypto -lsqlite3
 
-# Run the system
+### Run the system
     ./national_id_system
 ---
 
