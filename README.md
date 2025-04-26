@@ -98,10 +98,11 @@ A **highly secure and efficient** National ID (NID) management system built in C
 ### Prerequisites
     sudo apt update
     sudo apt install build-essential libssl-dev libsqlite3-dev
+    sudo apt install mousepad
 
 ### Compilation & Execution
 
-    nano national_id_system.c
+    mousepad national_id_system.c
     gcc national_id_system.c -o national_id_system -lcrypto -lsqlite3
 
 ### Run the system
