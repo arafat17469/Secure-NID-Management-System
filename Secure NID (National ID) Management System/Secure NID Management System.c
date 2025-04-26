@@ -98,7 +98,7 @@ void clear_input_buffer() {
 int validate_date(const char *date) {
     int day, month, year;
     return (sscanf(date, "%d-%d-%d", &day, &month, &year) == 3) && 
-           (year >= 1900 && year <= 2023) && 
+           (year >= 1900 && year <= 2007) && 
            (month >= 1 && month <= 12) && 
            (day >= 1 && day <= 31);
 }
