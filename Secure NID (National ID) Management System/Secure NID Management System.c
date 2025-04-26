@@ -202,12 +202,216 @@ void display_citizen(const Citizen *citizen) {
            citizen->mother_name, citizen->blood_group, citizen->is_active ? "Active" : "Inactive",
            ctime(&citizen->created_at), ctime(&citizen->last_modified));
 }
+// ================== USER AUTHENTICATION ==================
+int authenticate_user(const char *username, const char *password) {
+    char *sql = "SELECT password_hash, salt FROM users WHERE username = ?;";
+    sqlite3_stmt *stmt;
+    
+    // Prepare the SQL statement
+    if(sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
+        fprintf(stderr, "Database error: Failed to prepare statement\n");
+        return 0;
+    }
 
+    // Bind the username parameter
+    if(sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC) != SQLITE_OK) {
+        fprintf(stderr, "Database error: Failed to bind parameters\n");
+        sqlite3_finalize(stmt);
+        return 0;
+    }
 
+    // Execute the query
+    int rc = sqlite3_step(stmt);
+    if(rc == SQLITE_ROW) {
+        // Get stored hash and salt
+        const unsigned char *db_hash = sqlite3_column_blob(stmt, 0);
+        const unsigned char *salt = sqlite3_column_blob(stmt, 1);
+        
+        // Validate data sizes
+        if(sqlite3_column_bytes(stmt, 0) != SHA256_DIGEST_LENGTH || 
+           sqlite3_column_bytes(stmt, 1) != SALT_LEN) {
+            sqlite3_finalize(stmt);
+            return 0;
+        }
 
+        // Derive key from provided password
+        unsigned char derived_key[SHA256_DIGEST_LENGTH];
+        derive_key(password, salt, derived_key);
 
+        // Compare hashes
+        int result = (memcmp(db_hash, derived_key, SHA256_DIGEST_LENGTH) == 0);
+        sqlite3_finalize(stmt);
+        return result;
+    }
+    
+    // Handle cases where user not found or other errors
+    if(rc == SQLITE_DONE) {
+        sqlite3_finalize(stmt);
+        return 0;
+    }
+    
+    // Database error case
+    fprintf(stderr, "Database error: %s\n", sqlite3_errmsg(db));
+    sqlite3_finalize(stmt);
+    return 0;
+}
 
+// ================== ADMIN FUNCTIONS ==================
+void admin_register_citizen() {
+    Citizen new_citizen;
+    input_citizen(&new_citizen);
+    
+    if(save_citizen(&new_citizen)) {
+        printf("Citizen registered successfully!\n");
+        
+        // Log activity
+        char *sql = "INSERT INTO audit_logs (nid, timestamp, activity_type) VALUES (?,?,?);";
+        sqlite3_stmt *stmt;
+        if(sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK) {
+            sqlite3_bind_text(stmt, 1, new_citizen.nid, -1, SQLITE_STATIC);
+            sqlite3_bind_int64(stmt, 2, (sqlite3_int64)time(NULL));
+            sqlite3_bind_text(stmt, 3, "REGISTERED", -1, SQLITE_STATIC);
+            sqlite3_step(stmt);
+            sqlite3_finalize(stmt);
+        }
+    } else {
+        printf("Failed to register citizen!\n");
+    }
+}
 
+void admin_view_citizens() {
+    char *sql = "SELECT * FROM citizens;";
+    sqlite3_stmt *stmt;
+    int count = 0;
+    
+    if(sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK) {
+        printf("\nRegistered Citizens:\n");
+        while(sqlite3_step(stmt) == SQLITE_ROW) {
+            Citizen c;
+            strncpy(c.nid, (const char*)sqlite3_column_text(stmt, 0), 20);
+            strncpy(c.name, (const char*)sqlite3_column_text(stmt, 1), MAX_NAME);
+            strncpy(c.dob, (const char*)sqlite3_column_text(stmt, 2), 11);
+            strncpy(c.gender, (const char*)sqlite3_column_text(stmt, 3), 10);
+            strncpy(c.address, (const char*)sqlite3_column_text(stmt, 4), MAX_ADDRESS);
+            strncpy(c.father_name, (const char*)sqlite3_column_text(stmt, 5), MAX_NAME);
+            strncpy(c.mother_name, (const char*)sqlite3_column_text(stmt, 6), MAX_NAME);
+            strncpy(c.blood_group, (const char*)sqlite3_column_text(stmt, 7), 4);
+            c.is_active = sqlite3_column_int(stmt, 8);
+            c.created_at = (time_t)sqlite3_column_int64(stmt, 9);
+            c.last_modified = (time_t)sqlite3_column_int64(stmt, 10);
+            
+            display_citizen(&c);
+            printf("-----------------------------\n");
+            count++;
+        }
+        
+        if(count == 0) {
+            printf("No citizens registered yet!\n");
+        }
+        sqlite3_finalize(stmt);
+    } else {
+        printf("Failed to fetch citizens!\n");
+    }
+}
+
+void admin_search_citizen() {
+    char nid[20];
+    printf("Enter NID to search: ");
+    scanf("%19s", nid);
+    clear_input_buffer();
+    
+    char *sql = "SELECT * FROM citizens WHERE nid = ?;";
+    sqlite3_stmt *stmt;
+    
+    if(sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK) {
+        sqlite3_bind_text(stmt, 1, nid, -1, SQLITE_STATIC);
+        
+        if(sqlite3_step(stmt) == SQLITE_ROW) {
+            Citizen c;
+            strncpy(c.nid, (const char*)sqlite3_column_text(stmt, 0), 20);
+            strncpy(c.name, (const char*)sqlite3_column_text(stmt, 1), MAX_NAME);
+            strncpy(c.dob, (const char*)sqlite3_column_text(stmt, 2), 11);
+            strncpy(c.gender, (const char*)sqlite3_column_text(stmt, 3), 10);
+            strncpy(c.address, (const char*)sqlite3_column_text(stmt, 4), MAX_ADDRESS);
+            strncpy(c.father_name, (const char*)sqlite3_column_text(stmt, 5), MAX_NAME);
+            strncpy(c.mother_name, (const char*)sqlite3_column_text(stmt, 6), MAX_NAME);
+            strncpy(c.blood_group, (const char*)sqlite3_column_text(stmt, 7), 4);
+            c.is_active = sqlite3_column_int(stmt, 8);
+            c.created_at = (time_t)sqlite3_column_int64(stmt, 9);
+            c.last_modified = (time_t)sqlite3_column_int64(stmt, 10);
+            
+            display_citizen(&c);
+            
+            // Log search activity
+            char *log_sql = "INSERT INTO audit_logs (nid, timestamp, activity_type) VALUES (?,?,?);";
+            sqlite3_stmt *log_stmt;
+            if(sqlite3_prepare_v2(db, log_sql, -1, &log_stmt, 0) == SQLITE_OK) {
+                sqlite3_bind_text(log_stmt, 1, nid, -1, SQLITE_STATIC);
+                sqlite3_bind_int64(log_stmt, 2, (sqlite3_int64)time(NULL));
+                sqlite3_bind_text(log_stmt, 3, "SEARCHED", -1, SQLITE_STATIC);
+                sqlite3_step(log_stmt);
+                sqlite3_finalize(log_stmt);
+            }
+        } else {
+            printf("Citizen with NID %s not found!\n", nid);
+        }
+        sqlite3_finalize(stmt);
+    } else {
+        printf("Search failed!\n");
+    }
+}
+
+void admin_update_citizen() {
+    char nid[20];
+    printf("Enter NID to update: ");
+    scanf("%19s", nid);
+    clear_input_buffer();
+    
+    // First check if citizen exists
+    char *check_sql = "SELECT COUNT(*) FROM citizens WHERE nid = ?;";
+    sqlite3_stmt *check_stmt;
+    int exists = 0;
+    
+    if(sqlite3_prepare_v2(db, check_sql, -1, &check_stmt, 0) == SQLITE_OK) {
+        sqlite3_bind_text(check_stmt, 1, nid, -1, SQLITE_STATIC);
+        if(sqlite3_step(check_stmt) == SQLITE_ROW) {
+            exists = sqlite3_column_int(check_stmt, 0);
+        }
+        sqlite3_finalize(check_stmt);
+    }
+    
+    if(!exists) {
+        printf("Citizen with NID %s not found!\n", nid);
+        return;
+    }
+    
+    Citizen updated;
+    strcpy(updated.nid, nid);
+    printf("Enter new details for citizen with NID %s:\n", nid);
+    input_citizen(&updated);
+    updated.last_modified = time(NULL);
+    
+    char *update_sql = "UPDATE citizens SET "
+                      "name = ?, dob = ?, gender = ?, address = ?, "
+                      "father_name = ?, mother_name = ?, blood_group = ?, "
+                      "is_active = ?, last_modified = ? "
+                      "WHERE nid = ?;";
+    
+    sqlite3_stmt *update_stmt;
+    if(sqlite3_prepare_v2(db, update_sql, -1, &update_stmt, 0) == SQLITE_OK) {
+        sqlite3_bind_text(update_stmt, 1, updated.name, -1, SQLITE_STATIC);
+        sqlite3_bind_text(update_stmt, 2, updated.dob, -1, SQLITE_STATIC);
+        sqlite3_bind_text(update_stmt, 3, updated.gender, -1, SQLITE_STATIC);
+        sqlite3_bind_text(update_stmt, 4, updated.address, -1, SQLITE_STATIC);
+        sqlite3_bind_text(update_stmt, 5, updated.father_name, -1, SQLITE_STATIC);
+        sqlite3_bind_text(update_stmt, 6, updated.mother_name, -1, SQLITE_STATIC);
+        sqlite3_bind_text(update_stmt, 7, updated.blood_group, -1, SQLITE_STATIC);
+        sqlite3_bind_int(update_stmt, 8, updated.is_active);
+        sqlite3_bind_int64(update_stmt, 9, (sqlite3_int64)updated.last_modified);
+        sqlite3_bind_text(update_stmt, 10, updated.nid, -1, SQLITE_STATIC);
+        
+        if(sqlite3_step(update_stmt) == SQLITE_DONE) {
+            printf("Citizen updated successfully!\n"); 
 // Log update activity
             char *log_sql = "INSERT INTO audit_logs (nid, timestamp, activity_type) VALUES (?,?,?);";
             sqlite3_stmt *log_stmt;
