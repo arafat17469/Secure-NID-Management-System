@@ -206,51 +206,40 @@ void display_citizen(const Citizen *citizen) {
 int authenticate_user(const char *username, const char *password) {
     char *sql = "SELECT password_hash, salt FROM users WHERE username = ?;";
     sqlite3_stmt *stmt;
-    
-    // Prepare the SQL statement
+
     if(sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
         fprintf(stderr, "Database error: Failed to prepare statement\n");
         return 0;
     }
 
-    // Bind the username parameter
     if(sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC) != SQLITE_OK) {
         fprintf(stderr, "Database error: Failed to bind parameters\n");
         sqlite3_finalize(stmt);
         return 0;
     }
 
-    // Execute the query
     int rc = sqlite3_step(stmt);
     if(rc == SQLITE_ROW) {
-        // Get stored hash and salt
         const unsigned char *db_hash = sqlite3_column_blob(stmt, 0);
         const unsigned char *salt = sqlite3_column_blob(stmt, 1);
-        
-        // Validate data sizes
         if(sqlite3_column_bytes(stmt, 0) != SHA256_DIGEST_LENGTH || 
            sqlite3_column_bytes(stmt, 1) != SALT_LEN) {
             sqlite3_finalize(stmt);
             return 0;
         }
 
-        // Derive key from provided password
         unsigned char derived_key[SHA256_DIGEST_LENGTH];
         derive_key(password, salt, derived_key);
-
-        // Compare hashes
         int result = (memcmp(db_hash, derived_key, SHA256_DIGEST_LENGTH) == 0);
         sqlite3_finalize(stmt);
         return result;
     }
     
-    // Handle cases where user not found or other errors
     if(rc == SQLITE_DONE) {
         sqlite3_finalize(stmt);
         return 0;
     }
     
-    // Database error case
     fprintf(stderr, "Database error: %s\n", sqlite3_errmsg(db));
     sqlite3_finalize(stmt);
     return 0;
@@ -264,7 +253,6 @@ void admin_register_citizen() {
     if(save_citizen(&new_citizen)) {
         printf("Citizen registered successfully!\n");
         
-        // Log activity
         char *sql = "INSERT INTO audit_logs (nid, timestamp, activity_type) VALUES (?,?,?);";
         sqlite3_stmt *stmt;
         if(sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK) {
@@ -342,7 +330,6 @@ void admin_search_citizen() {
             
             display_citizen(&c);
             
-            // Log search activity
             char *log_sql = "INSERT INTO audit_logs (nid, timestamp, activity_type) VALUES (?,?,?);";
             sqlite3_stmt *log_stmt;
             if(sqlite3_prepare_v2(db, log_sql, -1, &log_stmt, 0) == SQLITE_OK) {
@@ -367,7 +354,6 @@ void admin_update_citizen() {
     scanf("%19s", nid);
     clear_input_buffer();
     
-    // First check if citizen exists
     char *check_sql = "SELECT COUNT(*) FROM citizens WHERE nid = ?;";
     sqlite3_stmt *check_stmt;
     int exists = 0;
@@ -412,7 +398,6 @@ void admin_update_citizen() {
         
         if(sqlite3_step(update_stmt) == SQLITE_DONE) {
             printf("Citizen updated successfully!\n"); 
-// Log update activity
             char *log_sql = "INSERT INTO audit_logs (nid, timestamp, activity_type) VALUES (?,?,?);";
             sqlite3_stmt *log_stmt;
             if(sqlite3_prepare_v2(db, log_sql, -1, &log_stmt, 0) == SQLITE_OK) {
@@ -525,8 +510,6 @@ int main() {
     }
 
     OpenSSL_add_all_algorithms();
-
-    // Initialize admin user if not exists
     char *check_admin = "SELECT COUNT(*) FROM users WHERE username = 'admin';";
     sqlite3_stmt *stmt;
     int admin_exists = 0;
