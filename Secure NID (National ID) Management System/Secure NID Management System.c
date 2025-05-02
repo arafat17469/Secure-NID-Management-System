@@ -525,8 +525,8 @@ int main() {
 
     OpenSSL_add_all_algorithms();
     char *check_admin = "SELECT COUNT(*) FROM users WHERE username = 'pub22$';";
-    sqlite3_stmt *stmt;
-    int admin_exists = 0;
+    sqlite3_stmt *stmt; 
+    int admin_exists = 0; 
     
     if(sqlite3_prepare_v2(db, check_admin, -1, &stmt, 0) == SQLITE_OK) {
         if(sqlite3_step(stmt) == SQLITE_ROW) {
@@ -538,11 +538,11 @@ int main() {
     if(!admin_exists) {
         SystemUser admin;
         strcpy(admin.username, "pub22$");
-        generate_salt(admin.salt);
+        generate_salt(admin.salt); 
         derive_key("Pubcse22$", admin.salt, admin.password_hash);
-        admin.role = ADMIN;
-        admin.failed_attempts = 0;
-        admin.last_login = 0;
+        admin.role = ADMIN; 
+        admin.failed_attempts = 0; 
+        admin.last_login = 0; 
         
         char *insert_sql = "INSERT INTO users VALUES (?,?,?,?,?,?);";
         if(sqlite3_prepare_v2(db, insert_sql, -1, &stmt, 0) == SQLITE_OK) {
@@ -562,7 +562,7 @@ int main() {
     int running = 1;
     while(running) {
         printf("\nNATIONAL ID MANAGEMENT SYSTEM\n");
-        printf("1. Admin Login\n");
+        printf("1. Admin Login\n"); 
         printf("2. Exit\n");
         printf("Choice: ");
 
@@ -572,14 +572,14 @@ int main() {
 
         if(choice == 1) {
             char username[100], password[100];
-            printf("Username: ");
+            printf("Username: "); 
             fgets(username, sizeof(username), stdin);
             username[strcspn(username, "\n")] = '\0';
-            printf("Password: ");
+            printf("Password: "); 
             fgets(password, sizeof(password), stdin);
             password[strcspn(password, "\n")] = '\0';
             if(authenticate_user(username, password)) {
-                printf("Login successful!\n");
+                printf("Login successful!\n"); 
                 admin_menu();
             } else {
                 printf("Authentication failed!\n");
