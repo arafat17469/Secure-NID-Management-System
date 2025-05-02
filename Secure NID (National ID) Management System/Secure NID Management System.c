@@ -182,7 +182,6 @@ void input_citizen(Citizen *citizen) {
 int save_citizen(Citizen *citizen) {
     char *sql = "INSERT INTO citizens VALUES (?,?,?,?,?,?,?,?,?,?,?);";
     sqlite3_stmt *stmt;
-    
     if(sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK) {
         fprintf(stderr, "Failed to prepare statement: %s\n", sqlite3_errmsg(db));
         return 0;
@@ -199,7 +198,6 @@ int save_citizen(Citizen *citizen) {
     sqlite3_bind_int(stmt, 9, citizen->is_active);
     sqlite3_bind_int64(stmt, 10, (sqlite3_int64)citizen->created_at);
     sqlite3_bind_int64(stmt, 11, (sqlite3_int64)citizen->last_modified);
-
     int rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
     
@@ -258,7 +256,6 @@ int authenticate_user(const char *username, const char *password) {
     sqlite3_finalize(stmt);
     return 0;
 }
-
 // ================== ADMIN FUNCTIONS ==================
 void admin_register_citizen() {
     Citizen new_citizen;
@@ -280,7 +277,6 @@ void admin_register_citizen() {
         printf("Failed to register citizen!\n");
     }
 }
-
 void admin_view_citizens() {
     char *sql = "SELECT * FROM citizens;";
     sqlite3_stmt *stmt;
@@ -315,7 +311,6 @@ void admin_view_citizens() {
         printf("Failed to fetch citizens!\n");
     }
 }
-
 void admin_search_citizen() {
     char nid[20];
     printf("Enter NID to search: ");
@@ -361,7 +356,6 @@ void admin_search_citizen() {
         printf("Search failed!\n");
     }
 }
-
 void admin_update_citizen() {
     char nid[20];
     printf("Enter NID to update: ");
@@ -527,13 +521,12 @@ int main() {
     char *check_admin = "SELECT COUNT(*) FROM users WHERE username = 'pub22$';";
     sqlite3_stmt *stmt; 
     int admin_exists = 0; 
-    
-    if(sqlite3_prepare_v2(db, check_admin, -1, &stmt, 0) == SQLITE_OK) {
-        if(sqlite3_step(stmt) == SQLITE_ROW) {
-            admin_exists = sqlite3_column_int(stmt, 0);
-        }
-        sqlite3_finalize(stmt);
-    }
+    if(sqlite3_prepare_v2(db, check_admin, -1, &stmt, 0) == SQLITE_OK)  {
+        if(sqlite3_step(stmt) == SQLITE_ROW)  {
+            admin_exists = sqlite3_column_int(stmt, 0); 
+        } 
+        sqlite3_finalize(stmt); 
+    } 
     
     if(!admin_exists) { 
         SystemUser admin; 
@@ -543,7 +536,6 @@ int main() {
         admin.role = ADMIN;  
         admin.failed_attempts = 0;  
         admin.last_login = 0;  
-        
         char *insert_sql = "INSERT INTO users VALUES (?,?,?,?,?,?);"; 
         if(sqlite3_prepare_v2(db, insert_sql, -1, &stmt, 0) == SQLITE_OK) {  
             sqlite3_bind_text(stmt, 1, admin.username, -1, SQLITE_STATIC); 
@@ -552,35 +544,31 @@ int main() {
             sqlite3_bind_int(stmt, 4, admin.role); 
             sqlite3_bind_int(stmt, 5, admin.failed_attempts); 
             sqlite3_bind_int64(stmt, 6, admin.last_login); 
-            
             sqlite3_step(stmt); 
             sqlite3_finalize(stmt); 
             printf("Admin user created with password 'adminpass'\n"); 
         } 
     } 
-
-    int running = 1;
-    while(running) {
-        printf("\nNATIONAL ID MANAGEMENT SYSTEM\n");
-        printf("1. Admin Login\n"); 
-        printf("2. Exit\n");
-        printf("Choice: ");
-
-        int choice;
-        scanf("%d", &choice);
-        clear_input_buffer();
-
-        if(choice == 1) {
-            char username[100], password[100];
-            printf("Username: "); 
+    int running = 1; 
+    while(running) { 
+        printf("\nNATIONAL ID MANAGEMENT SYSTEM\n"); 
+        printf("1. Admin Login\n");  
+        printf("2. Exit\n");  
+        printf("Choice: ");  
+        int choice;  
+        scanf("%d", &choice); 
+        clear_input_buffer(); 
+        if(choice == 1) { 
+            char username[100], password[100]; 
+            printf("Username: ");  
             fgets(username, sizeof(username), stdin);
             username[strcspn(username, "\n")] = '\0';
             printf("Password: "); 
             fgets(password, sizeof(password), stdin);
             password[strcspn(password, "\n")] = '\0';
-            if(authenticate_user(username, password)) {
+            if(authenticate_user(username, password)) { 
                 printf("Login successful!\n"); 
-                admin_menu();
+                admin_menu(); 
             } else {
                 printf("Authentication failed!\n");
             }
