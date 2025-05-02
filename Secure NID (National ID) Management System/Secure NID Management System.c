@@ -156,9 +156,22 @@ void input_citizen(Citizen *citizen) {
     scanf(" %99[^\n]", citizen->mother_name);
     clear_input_buffer();
 
-    printf("Blood Group: ");
-    scanf("%3s", citizen->blood_group);
-    clear_input_buffer();
+     const char *valid_blood_groups[] = {"A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-", NULL};
+    int valid = 0;
+    do {
+        printf("Blood Group (A+/A-/B+/B-/O+/O-/AB+/AB-): ");
+        scanf("%3s", citizen->blood_group);
+        clear_input_buffer();
+        for(int i = 0; valid_blood_groups[i] != NULL; i++) {
+            if(strcmp(citizen->blood_group, valid_blood_groups[i]) == 0) {
+                valid = 1;
+                break;
+            }
+        }
+        if (!valid) {
+            printf("Invalid blood group. Please enter a valid one.\n");
+        }
+    } while (!valid);
 
     citizen->is_active = 1;
     citizen->created_at = time(NULL);
