@@ -222,7 +222,6 @@ int authenticate_user(const char *username, const char *password) {
         fprintf(stderr, "Database error: Failed to prepare statement\n");
         return 0;
     }
-
     if(sqlite3_bind_text(stmt, 1, username, -1, SQLITE_STATIC) != SQLITE_OK) {
         fprintf(stderr, "Database error: Failed to bind parameters\n");
         sqlite3_finalize(stmt);
@@ -563,14 +562,13 @@ int main() {
             } else {
                 printf("Authentication failed!\n");
             }
-        } else if(choice == 2) {
-            running = 0;
-        } else {
-            printf("Invalid choice!\n");
-        }
-    }
-
-    sqlite3_close(db);
-    EVP_cleanup();
-    return 0;
-}
+        } else if(choice == 2) { 
+            running = 0; 
+        } else { 
+            printf("Invalid choice!\n"); 
+        } 
+    } 
+    sqlite3_close(db); 
+    EVP_cleanup(); 
+    return 0; 
+} 
