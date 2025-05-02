@@ -395,26 +395,25 @@ void admin_update_citizen() {
         sqlite3_bind_int64(update_stmt, 9, (sqlite3_int64)updated.last_modified);
         sqlite3_bind_text(update_stmt, 10, updated.nid, -1, SQLITE_STATIC);
         
-        if(sqlite3_step(update_stmt) == SQLITE_DONE) {
-            printf("Citizen updated successfully!\n"); 
-            char *log_sql = "INSERT INTO audit_logs (nid, timestamp, activity_type) VALUES (?,?,?);";
-            sqlite3_stmt *log_stmt;
-            if(sqlite3_prepare_v2(db, log_sql, -1, &log_stmt, 0) == SQLITE_OK) {
-                sqlite3_bind_text(log_stmt, 1, nid, -1, SQLITE_STATIC);
-                sqlite3_bind_int64(log_stmt, 2, (sqlite3_int64)time(NULL));
-                sqlite3_bind_text(log_stmt, 3, "UPDATED", -1, SQLITE_STATIC);
-                sqlite3_step(log_stmt);
-                sqlite3_finalize(log_stmt);
-            }
-        } else {
-            printf("Failed to update citizen!\n");
-        }
-        sqlite3_finalize(update_stmt);
-    } else {
-        printf("Update failed!\n");
-    }
-}
-
+        if(sqlite3_step(update_stmt) == SQLITE_DONE) { 
+            printf("Citizen updated successfully!\n");  
+            char *log_sql = "INSERT INTO audit_logs (nid, timestamp, activity_type) VALUES (?,?,?);"; 
+            sqlite3_stmt *log_stmt; 
+            if(sqlite3_prepare_v2(db, log_sql, -1, &log_stmt, 0) == SQLITE_OK) { 
+                sqlite3_bind_text(log_stmt, 1, nid, -1, SQLITE_STATIC); 
+                sqlite3_bind_int64(log_stmt, 2, (sqlite3_int64)time(NULL)); 
+                sqlite3_bind_text(log_stmt, 3, "UPDATED", -1, SQLITE_STATIC); 
+                sqlite3_step(log_stmt); 
+                sqlite3_finalize(log_stmt); 
+            } 
+        } else { 
+            printf("Failed to update citizen!\n"); 
+        } 
+        sqlite3_finalize(update_stmt); 
+    } else { 
+        printf("Update failed!\n"); 
+    } 
+} 
 void admin_delete_citizen() {
     char nid[20];
     printf("Enter NID to delete: ");
@@ -502,13 +501,13 @@ void admin_menu() {
 }
 
 // ================== MAIN PROGRAM ==================
-int main() {
-    if(!init_db()) {
-        fprintf(stderr, "Failed to initialize database!\n");
-        return 1;
-    }
+int main() { 
+    if(!init_db()) { 
+        fprintf(stderr, "Failed to initialize database!\n"); 
+        return 1; 
+    } 
 
-    OpenSSL_add_all_algorithms();
+    OpenSSL_add_all_algorithms(); 
     char *check_admin = "SELECT COUNT(*) FROM users WHERE username = 'pub22$';";
     sqlite3_stmt *stmt; 
     int admin_exists = 0; 
