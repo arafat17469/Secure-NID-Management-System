@@ -524,7 +524,7 @@ int main() {
     }
 
     OpenSSL_add_all_algorithms();
-    char *check_admin = "SELECT COUNT(*) FROM users WHERE username = 'admin';";
+    char *check_admin = "SELECT COUNT(*) FROM users WHERE username = 'pub22$';";
     sqlite3_stmt *stmt;
     int admin_exists = 0;
     
@@ -537,9 +537,9 @@ int main() {
     
     if(!admin_exists) {
         SystemUser admin;
-        strcpy(admin.username, "admin");
+        strcpy(admin.username, "pub22$");
         generate_salt(admin.salt);
-        derive_key("adminpass", admin.salt, admin.password_hash);
+        derive_key("Pubcse22$", admin.salt, admin.password_hash);
         admin.role = ADMIN;
         admin.failed_attempts = 0;
         admin.last_login = 0;
@@ -571,13 +571,13 @@ int main() {
         clear_input_buffer();
 
         if(choice == 1) {
-            char username[50], password[50];
+            char username[100], password[100];
             printf("Username: ");
-            scanf("%49s", username);
+            fgets(username, sizeof(username), stdin);
+            username[strcspn(username, "\n")] = '\0';
             printf("Password: ");
-            scanf("%49s", password);
-            clear_input_buffer();
-
+            fgets(password, sizeof(password), stdin);
+            password[strcspn(password, "\n")] = '\0';
             if(authenticate_user(username, password)) {
                 printf("Login successful!\n");
                 admin_menu();
