@@ -559,9 +559,9 @@ int main() {
             if(authenticate_user(username, password)) { 
                 printf("Login successful!\n"); 
                 admin_menu(); 
-            } else {
-                printf("Authentication failed!\n");
-            }
+            } else { 
+                printf("Authentication failed!\n"); 
+            } 
         } else if(choice == 2) { 
             running = 0; 
         } else { 
