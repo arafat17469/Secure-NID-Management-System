@@ -578,36 +578,31 @@ int main() {
     int running = 1;
     while(running) {
         printf("\nNATIONAL ID MANAGEMENT SYSTEM\n");
-        printf("1. Admin Login\n");
-        printf("2. Exit\n");
+        printf("1.Admin Login\n");
+        printf("2.Exit\n");
         printf("Choice: ");
-
         int choice;
         scanf("%d", &choice);
         clear_input_buffer();
-
         if(choice == 1) {
-            char username[50], password[50];
+            char username[100], password[100];
             printf("Username: ");
-            scanf("%49s", username);
+            fgets(username, sizeof(username), stdin);
+            username[strcspn(username, "\n")] = '\0';
             printf("Password: ");
-            scanf("%49s", password);
-            clear_input_buffer();
-
+            fgets(password, sizeof(password), stdin);
+            password[strcspn(password, "\n")] = '\0';
             if(authenticate_user(username, password)) {
                 printf("Login successful!\n");
                 admin_menu();
             } else {
-                printf("Authentication failed!\n");
-            }
+                printf("Authentication failed!\n"); }
         } else if(choice == 2) {
             running = 0;
         } else {
-            printf("Invalid choice!\n");
-        }
-    }
-
+            printf("Invalid choice!\n");} 
+    } 
     sqlite3_close(db);
     EVP_cleanup();
     return 0;
-}
+} 
