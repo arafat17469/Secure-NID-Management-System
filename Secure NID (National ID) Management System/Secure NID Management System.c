@@ -516,57 +516,55 @@ int main() {
         } 
         sqlite3_finalize(stmt); 
     } 
-    if(!admin_exists) { 
-        SystemUser admin; 
+    if(!admin_exists) {
+        SystemUser  admin; 
         strcpy(admin.username, "pub22$");
         generate_salt(admin.salt);  
-        derive_key("Pubcse22$", admin.salt, admin.password_hash); 
-        admin.role = ADMIN;  
-        admin.failed_attempts = 0;  
-        admin.last_login = 0;  
-        char *insert_sql = "INSERT INTO users VALUES (?,?,?,?,?,?);"; 
-        if(sqlite3_prepare_v2(db, insert_sql, -1, &stmt, 0) == SQLITE_OK) {  
-            sqlite3_bind_text(stmt, 1, admin.username, -1, SQLITE_STATIC); 
-            sqlite3_bind_blob(stmt, 2, admin.password_hash, SHA256_DIGEST_LENGTH, SQLITE_STATIC); 
-            sqlite3_bind_blob(stmt, 3, admin.salt, SALT_LEN, SQLITE_STATIC); 
-            sqlite3_bind_int(stmt, 4, admin.role); 
-            sqlite3_bind_int(stmt, 5, admin.failed_attempts); 
-            sqlite3_bind_int64(stmt, 6, admin.last_login); 
-            sqlite3_step(stmt); 
-            sqlite3_finalize(stmt); 
-            printf("Admin user created with password 'adminpass'\n"); 
-        } 
-    } 
-    int running = 1; 
-    while(running) { 
-        printf("\nNATIONAL ID MANAGEMENT SYSTEM\n"); 
-        printf("1. Admin Login\n");  
-        printf("2. Exit\n");  
-        printf("Choice: ");  
-        int choice;  
-        scanf("%d", &choice); 
-        clear_input_buffer(); 
-        if(choice == 1) { 
-            char username[100], password[100]; 
-            printf("Username: ");  
+        derive_key("Pubcse22$", admin.salt,admin.password_hash);
+        admin.role = ADMIN;
+        admin.failed_attempts = 0;
+        admin.last_login = 0;
+        char *insert_sql = "INSERT  INTO users VALUES (?,?,?,?,?,?);";
+        if(sqlite3_prepare_v2(db, insert_sql, -1, &stmt, 0) ==  SQLITE_OK) {
+            sqlite3_bind_text(stmt, 1, admin.username, -1, SQLITE_STATIC);
+            sqlite3_bind_blob(stmt, 2, admin.password_hash, SHA256_DIGEST_LENGTH, SQLITE_STATIC);
+            sqlite3_bind_blob(stmt, 3, admin.salt, SALT_LEN, SQLITE_STATIC);
+            sqlite3_bind_int(stmt, 4, admin.role);
+            sqlite3_bind_int(stmt, 5, admin.failed_attempts);
+            sqlite3_bind_int64(stmt, 6, admin.last_login);
+            sqlite3_step(stmt);
+            sqlite3_finalize(stmt);
+            printf("Admin user created with password 'adminpass'\n");
+        }
+    }
+    int running = 1;
+    while(running) {
+        printf("\nNATIONAL ID MANAGEMENT SYSTEM\n");
+        printf("1.Admin Login\n");
+        printf("2.Exit\n");
+        printf("Choice: ");
+        int choice;
+        scanf("%d", &choice);
+        clear_input_buffer();
+        if(choice == 1) {
+            char username[100], password[100];
+            printf("Username: ");
             fgets(username, sizeof(username), stdin);
             username[strcspn(username, "\n")] = '\0';
-            printf("Password: "); 
+            printf("Password: ");
             fgets(password, sizeof(password), stdin);
             password[strcspn(password, "\n")] = '\0';
-            if(authenticate_user(username, password)) { 
-                printf("Login successful!\n"); 
-                admin_menu(); 
-            } else { 
-                printf("Authentication failed!\n"); 
-            } 
-        } else if(choice == 2) { 
-            running = 0; 
-        } else { 
-            printf("Invalid choice!\n"); 
-        } 
+            if(authenticate_user(username, password)) {
+                printf("Login successful!\n");
+                admin_menu();
+            } else {
+                printf("Authentication failed!\n"); }
+        } else if(choice == 2) {
+            running = 0;
+        } else {
+            printf("Invalid choice!\n");} 
     } 
-    sqlite3_close(db); 
-    EVP_cleanup(); 
-    return 0; 
+    sqlite3_close(db);
+    EVP_cleanup();
+    return 0;
 } 
