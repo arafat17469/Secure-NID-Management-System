@@ -535,29 +535,29 @@ int main() {
         sqlite3_finalize(stmt);
     }
     
-    if(!admin_exists) {
-        SystemUser admin;
+    if(!admin_exists) { 
+        SystemUser admin; 
         strcpy(admin.username, "pub22$");
-        generate_salt(admin.salt); 
-        derive_key("Pubcse22$", admin.salt, admin.password_hash);
-        admin.role = ADMIN; 
-        admin.failed_attempts = 0; 
-        admin.last_login = 0; 
+        generate_salt(admin.salt);  
+        derive_key("Pubcse22$", admin.salt, admin.password_hash); 
+        admin.role = ADMIN;  
+        admin.failed_attempts = 0;  
+        admin.last_login = 0;  
         
-        char *insert_sql = "INSERT INTO users VALUES (?,?,?,?,?,?);";
-        if(sqlite3_prepare_v2(db, insert_sql, -1, &stmt, 0) == SQLITE_OK) {
-            sqlite3_bind_text(stmt, 1, admin.username, -1, SQLITE_STATIC);
-            sqlite3_bind_blob(stmt, 2, admin.password_hash, SHA256_DIGEST_LENGTH, SQLITE_STATIC);
-            sqlite3_bind_blob(stmt, 3, admin.salt, SALT_LEN, SQLITE_STATIC);
-            sqlite3_bind_int(stmt, 4, admin.role);
-            sqlite3_bind_int(stmt, 5, admin.failed_attempts);
-            sqlite3_bind_int64(stmt, 6, admin.last_login);
+        char *insert_sql = "INSERT INTO users VALUES (?,?,?,?,?,?);"; 
+        if(sqlite3_prepare_v2(db, insert_sql, -1, &stmt, 0) == SQLITE_OK) {  
+            sqlite3_bind_text(stmt, 1, admin.username, -1, SQLITE_STATIC); 
+            sqlite3_bind_blob(stmt, 2, admin.password_hash, SHA256_DIGEST_LENGTH, SQLITE_STATIC); 
+            sqlite3_bind_blob(stmt, 3, admin.salt, SALT_LEN, SQLITE_STATIC); 
+            sqlite3_bind_int(stmt, 4, admin.role); 
+            sqlite3_bind_int(stmt, 5, admin.failed_attempts); 
+            sqlite3_bind_int64(stmt, 6, admin.last_login); 
             
-            sqlite3_step(stmt);
-            sqlite3_finalize(stmt);
-            printf("Admin user created with password 'adminpass'\n");
-        }
-    }
+            sqlite3_step(stmt); 
+            sqlite3_finalize(stmt); 
+            printf("Admin user created with password 'adminpass'\n"); 
+        } 
+    } 
 
     int running = 1;
     while(running) {
