@@ -127,8 +127,7 @@ void derive_key(const char *pass, const unsigned char *salt, unsigned char *key)
 void input_citizen(Citizen *citizen) {
     printf("\nEnter Citizen Details:\n");
     
-    generate_unique_nid(citizen->nid);
-    printf("Generated NID: %s\n", citizen->nid);
+
 
     printf("Full Name: ");
     scanf(" %99[^\n]", citizen->name);
@@ -172,6 +171,8 @@ void input_citizen(Citizen *citizen) {
             printf("Invalid blood group. Please enter a valid one.\n");
         }
     } while (!valid);
+    generate_unique_nid(citizen->nid);
+    printf("Generated NID: %s\n", citizen->nid);
 
     citizen->is_active = 1;
     citizen->created_at = time(NULL);
