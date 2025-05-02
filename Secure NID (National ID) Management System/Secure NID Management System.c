@@ -505,9 +505,8 @@ int main() {
     if(!init_db()) { 
         fprintf(stderr, "Failed to initialize database!\n"); 
         return 1; 
-    } 
-
-    OpenSSL_add_all_algorithms(); 
+    }  
+    OpenSSL_add_all_algorithms();  
     char *check_admin = "SELECT COUNT(*) FROM users WHERE username = 'pub22$';";
     sqlite3_stmt *stmt; 
     int admin_exists = 0; 
