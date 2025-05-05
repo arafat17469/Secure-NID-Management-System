@@ -124,10 +124,8 @@ void derive_key(const char *pass, const unsigned char *salt, unsigned char *key)
 }
 
 // ================== CITIZEN OPERATIONS ==================
-void input_citizen(Citizen *citizen) {
+void input_citizen(Citizen *citizen, int is_new) {
     printf("\nEnter Citizen Details:\n");
-    
-
 
     printf("Full Name: ");
     scanf(" %99[^\n]", citizen->name);
@@ -155,7 +153,7 @@ void input_citizen(Citizen *citizen) {
     scanf(" %99[^\n]", citizen->mother_name);
     clear_input_buffer();
 
-     const char *valid_blood_groups[] = {"A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-", NULL};
+    const char *valid_blood_groups[] = {"A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-", NULL};
     int valid = 0;
     do {
         printf("Blood Group (A+/A-/B+/B-/O+/O-/AB+/AB-): ");
@@ -171,14 +169,22 @@ void input_citizen(Citizen *citizen) {
             printf("Invalid blood group. Please enter a valid one.\n");
         }
     } while (!valid);
-    generate_unique_nid(citizen->nid);
-    printf("Generated NID: %s\n", citizen->nid);
 
-    citizen->is_active = 1;
-    citizen->created_at = time(NULL);
-    citizen->last_modified = citizen->created_at;
+    // Generate NID only for new entries
+    if (is_new) {
+        generate_unique_nid(citizen->nid);
+        printf("Generated NID: %s\n", citizen->nid);
+        citizen->is_active = 1;
+        citizen->created_at = time(NULL);
+    } else {
+        // For updates, prompt for active status
+        printf("Is Active (1=Yes, 0=No): ");
+        scanf("%d", &citizen->is_active);
+        clear_input_buffer();
+    }
+
+    citizen->last_modified = time(NULL); // Always update last_modified
 }
-
 int save_citizen(Citizen *citizen) {
     char *sql = "INSERT INTO citizens VALUES (?,?,?,?,?,?,?,?,?,?,?);";
     sqlite3_stmt *stmt;
@@ -254,7 +260,7 @@ int authenticate_user(const char *username, const char *password) {
 // ================== ADMIN FUNCTIONS ==================
 void admin_register_citizen() {
     Citizen new_citizen;
-    input_citizen(&new_citizen);
+    input_citizen(&new_citizen,1);
     
     if(save_citizen(&new_citizen)) {
         printf("Citizen registered successfully!\n");
@@ -363,6 +369,7 @@ void admin_update_citizen() {
     if (sqlite3_prepare_v2(db, fetch_sql, -1, &fetch_stmt, 0) == SQLITE_OK) {
         sqlite3_bind_text(fetch_stmt, 1, nid, -1, SQLITE_STATIC);
         if (sqlite3_step(fetch_stmt) == SQLITE_ROW) {
+            // Copy existing data (including NID)
             strncpy(existing.nid, (const char*)sqlite3_column_text(fetch_stmt, 0), 20);
             strncpy(existing.name, (const char*)sqlite3_column_text(fetch_stmt, 1), MAX_NAME);
             strncpy(existing.dob, (const char*)sqlite3_column_text(fetch_stmt, 2), 11);
@@ -384,12 +391,11 @@ void admin_update_citizen() {
         return;
     }
 
-    // Copy existing data to updated struct
+    // Copy existing data to retain NID and creation time
     Citizen updated = existing;
 
     printf("Enter new details for citizen with NID %s:\n", nid);
-    input_citizen(&updated, 0); // 0 indicates update
-
+    input_citizen(&updated, 0); 
     // Prepare SQL statement
     char *update_sql = "UPDATE citizens SET "
                       "name = ?, dob = ?, gender = ?, address = ?, "
