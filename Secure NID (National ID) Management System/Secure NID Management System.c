@@ -377,43 +377,41 @@ void admin_update_citizen() {
     input_citizen(&updated);
     updated.last_modified = time(NULL);
     
-    char *update_sql = "UPDATE citizens SET "
-                      "name = ?, dob = ?, gender = ?, address = ?, "
-                      "father_name = ?, mother_name = ?, blood_group = ?, "
-                      "is_active = ?, last_modified = ? "
-                      "WHERE nid = ?;";
-    
-    sqlite3_stmt *update_stmt;
-    if(sqlite3_prepare_v2(db, update_sql, -1, &update_stmt, 0) == SQLITE_OK) {
-        sqlite3_bind_text(update_stmt, 1, updated.name, -1, SQLITE_STATIC);
-        sqlite3_bind_text(update_stmt, 2, updated.dob, -1, SQLITE_STATIC);
-        sqlite3_bind_text(update_stmt, 3, updated.gender, -1, SQLITE_STATIC);
-        sqlite3_bind_text(update_stmt, 4, updated.address, -1, SQLITE_STATIC);
-        sqlite3_bind_text(update_stmt, 5, updated.father_name, -1, SQLITE_STATIC);
-        sqlite3_bind_text(update_stmt, 6, updated.mother_name, -1, SQLITE_STATIC);
-        sqlite3_bind_text(update_stmt, 7, updated.blood_group, -1, SQLITE_STATIC);
-        sqlite3_bind_int(update_stmt, 8, updated.is_active);
-        sqlite3_bind_int64(update_stmt, 9, (sqlite3_int64)updated.last_modified);
-        sqlite3_bind_text(update_stmt, 10, updated.nid, -1, SQLITE_STATIC);
-        
-        if(sqlite3_step(update_stmt) == SQLITE_DONE) { 
-            printf("Citizen updated successfully!\n");  
-            char *log_sql = "INSERT INTO audit_logs (nid, timestamp, activity_type) VALUES (?,?,?);"; 
-            sqlite3_stmt *log_stmt; 
-            if(sqlite3_prepare_v2(db, log_sql, -1, &log_stmt, 0) == SQLITE_OK) { 
-                sqlite3_bind_text(log_stmt, 1, nid, -1, SQLITE_STATIC); 
-                sqlite3_bind_int64(log_stmt, 2, (sqlite3_int64)time(NULL)); 
-                sqlite3_bind_text(log_stmt, 3, "UPDATED", -1, SQLITE_STATIC); 
-                sqlite3_step(log_stmt); 
-                sqlite3_finalize(log_stmt); 
-            } 
-        } else { 
-            printf("Failed to update citizen!\n"); 
-        } 
-        sqlite3_finalize(update_stmt); 
-    } else { 
-        printf("Update failed!\n"); 
-    } 
+        char *update_sql = "UPDATE citizens SET name = ?, dob = ?, gender = ?, address = ?, father_name = ?, mother_name = ?, blood_group = ?, last_modified = ? WHERE nid = ?;";
+    sqlite3_stmt *stmt;
+
+    if (sqlite3_prepare_v2(db, update_sql, -1, &stmt, 0) == SQLITE_OK) {
+        sqlite3_bind_text(stmt, 1, updated.name, -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 2, updated.dob, -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 3, updated.gender, -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 4, updated.address, -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 5, updated.father_name, -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 6, updated.mother_name, -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 7, updated.blood_group, -1, SQLITE_STATIC);
+        sqlite3_bind_int64(stmt, 8, (sqlite3_int64)updated.last_modified);
+        sqlite3_bind_text(stmt, 9, nid, -1, SQLITE_STATIC);
+
+        if (sqlite3_step(stmt) == SQLITE_DONE) {
+            printf("Citizen updated successfully!\n");
+
+            // Log the update
+            char *log_sql = "INSERT INTO audit_logs (nid, timestamp, activity_type) VALUES (?,?,?);";
+            sqlite3_stmt *log_stmt;
+            if (sqlite3_prepare_v2(db, log_sql, -1, &log_stmt, 0) == SQLITE_OK) {
+                sqlite3_bind_text(log_stmt, 1, nid, -1, SQLITE_STATIC);
+                sqlite3_bind_int64(log_stmt, 2, (sqlite3_int64)time(NULL));
+                sqlite3_bind_text(log_stmt, 3, "UPDATED", -1, SQLITE_STATIC);
+                sqlite3_step(log_stmt);
+                sqlite3_finalize(log_stmt);
+            }
+        } else {
+            printf("Failed to update citizen!\n");
+        }
+        sqlite3_finalize(stmt);
+    } else {
+        printf("Update preparation failed!\n");
+    }
+
 } 
 void admin_delete_citizen() {
     char nid[20];
