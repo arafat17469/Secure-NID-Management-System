@@ -135,6 +135,10 @@ void input_citizen(Citizen *citizen, int is_new) {
         printf("DOB (DD-MM-YYYY): ");
         scanf("%10s", citizen->dob);
         clear_input_buffer();
+         if (!validate_date(citizen->dob)) {
+        printf("Invalid date format or out-of-range year!\n");
+        printf("Please enter DOB between 1900 and 2007 in DD-MM-YYYY format.\n\n");
+    }
     } while (!validate_date(citizen->dob));
 
     printf("Gender (Male/Female): ");
