@@ -17,6 +17,7 @@ typedef enum { ADMIN, OFFICER, AUDITOR } Role;
 sqlite3 *db;
 char *DB_NAME = "national_id.db";
 
+
 // ================== DATABASE FUNCTIONS ==================
 int init_db() {
     int rc = sqlite3_open(DB_NAME, &db);
@@ -66,6 +67,7 @@ int init_db() {
     return 1;
 }
 
+
 // ================== DATA MODELS ==================
 typedef struct {
     char nid[20];
@@ -90,6 +92,7 @@ typedef struct {
     time_t last_login;
 } SystemUser;
 
+
 // ================== UTILITY FUNCTIONS ==================
 void clear_input_buffer() {
     while(getchar() != '\n');
@@ -108,6 +111,7 @@ void generate_unique_nid(char *nid) {
     snprintf(nid, 11, "%010d", rand() % 1000000000);
 }
 
+
 // ================== CRYPTO FUNCTIONS ==================
 void generate_salt(unsigned char *salt) {
     if (!RAND_bytes(salt, SALT_LEN)) {
@@ -122,6 +126,7 @@ void derive_key(const char *pass, const unsigned char *salt, unsigned char *key)
         exit(EXIT_FAILURE);
     }
 }
+
 
 // ================== CITIZEN OPERATIONS ==================
 void input_citizen(Citizen *citizen, int is_new) {
@@ -170,20 +175,20 @@ void input_citizen(Citizen *citizen, int is_new) {
         }
     } while (!valid);
 
-    // Generate NID only for new entries
+    
     if (is_new) {
         generate_unique_nid(citizen->nid);
         printf("Generated NID: %s\n", citizen->nid);
         citizen->is_active = 1;
         citizen->created_at = time(NULL);
     } else {
-        // For updates, prompt for active status
+
         printf("Is Active (1=Yes, 0=No): ");
         scanf("%d", &citizen->is_active);
         clear_input_buffer();
     }
 
-    citizen->last_modified = time(NULL); // Always update last_modified
+    citizen->last_modified = time(NULL); 
 }
 int save_citizen(Citizen *citizen) {
     char *sql = "INSERT INTO citizens VALUES (?,?,?,?,?,?,?,?,?,?,?);";
@@ -219,6 +224,7 @@ void display_citizen(const Citizen *citizen) {
            citizen->mother_name, citizen->blood_group, citizen->is_active ? "Active" : "Inactive",
            ctime(&citizen->created_at), ctime(&citizen->last_modified));
 }
+
 
 // ================== USER AUTHENTICATION ==================
 int authenticate_user(const char *username, const char *password) {
@@ -257,6 +263,8 @@ int authenticate_user(const char *username, const char *password) {
     sqlite3_finalize(stmt);
     return 0;
 }
+
+
 // ================== ADMIN FUNCTIONS ==================
 void admin_register_citizen() {
     Citizen new_citizen;
@@ -360,7 +368,7 @@ void admin_update_citizen() {
     scanf("%19s", nid);
     clear_input_buffer();
 
-    // Fetch existing citizen data
+    
     char *fetch_sql = "SELECT * FROM citizens WHERE nid = ?;";
     sqlite3_stmt *fetch_stmt;
     Citizen existing;
@@ -369,7 +377,7 @@ void admin_update_citizen() {
     if (sqlite3_prepare_v2(db, fetch_sql, -1, &fetch_stmt, 0) == SQLITE_OK) {
         sqlite3_bind_text(fetch_stmt, 1, nid, -1, SQLITE_STATIC);
         if (sqlite3_step(fetch_stmt) == SQLITE_ROW) {
-            // Copy existing data (including NID)
+
             strncpy(existing.nid, (const char*)sqlite3_column_text(fetch_stmt, 0), 20);
             strncpy(existing.name, (const char*)sqlite3_column_text(fetch_stmt, 1), MAX_NAME);
             strncpy(existing.dob, (const char*)sqlite3_column_text(fetch_stmt, 2), 11);
@@ -391,12 +399,11 @@ void admin_update_citizen() {
         return;
     }
 
-    // Copy existing data to retain NID and creation time
     Citizen updated = existing;
 
     printf("Enter new details for citizen with NID %s:\n", nid);
     input_citizen(&updated, 0); 
-    // Prepare SQL statement
+
     char *update_sql = "UPDATE citizens SET "
                       "name = ?, dob = ?, gender = ?, address = ?, "
                       "father_name = ?, mother_name = ?, blood_group = ?, "
@@ -414,11 +421,11 @@ void admin_update_citizen() {
         sqlite3_bind_text(update_stmt, 7, updated.blood_group, -1, SQLITE_STATIC);
         sqlite3_bind_int(update_stmt, 8, updated.is_active);
         sqlite3_bind_int64(update_stmt, 9, (sqlite3_int64)updated.last_modified);
-        sqlite3_bind_text(update_stmt, 10, nid, -1, SQLITE_STATIC); // Use original NID for WHERE
+        sqlite3_bind_text(update_stmt, 10, nid, -1, SQLITE_STATIC); 
 
         if (sqlite3_step(update_stmt) == SQLITE_DONE) {
             printf("Citizen updated successfully!\n");
-            // Log activity...
+
         } else {
             printf("Failed to update citizen!\n");
         }
@@ -442,7 +449,7 @@ void admin_delete_citizen() {
         if(sqlite3_step(delete_stmt) == SQLITE_DONE) {
             printf("Citizen with NID %s deleted successfully!\n", nid);
             
-            // Log deletion activity
+
             char *log_sql = "INSERT INTO audit_logs (nid, timestamp, activity_type) VALUES (?,?,?);";
             sqlite3_stmt *log_stmt;
             if(sqlite3_prepare_v2(db, log_sql, -1, &log_stmt, 0) == SQLITE_OK) {
@@ -512,6 +519,7 @@ void admin_menu() {
         }
     }
 }
+
 
 // ================== MAIN PROGRAM ==================
 int main() { 
