@@ -174,20 +174,20 @@ void input_citizen(Citizen *citizen, int is_new) {
         }
     } while (!valid);
 
-    // Generate NID only for new entries
+  
     if (is_new) {
         generate_unique_nid(citizen->nid);
         printf("Generated NID: %s\n", citizen->nid);
         citizen->is_active = 1;
         citizen->created_at = time(NULL);
     } else {
-        // For updates, prompt for active status
+   
         printf("Is Active (1=Yes, 0=No): ");
         scanf("%d", &citizen->is_active);
         clear_input_buffer();
     }
 
-    citizen->last_modified = time(NULL); // Always update last_modified
+    citizen->last_modified = time(NULL);
 }
 int save_citizen(Citizen *citizen) {
     char *sql = "INSERT INTO citizens VALUES (?,?,?,?,?,?,?,?,?,?,?);";
@@ -364,7 +364,7 @@ void admin_update_citizen() {
     scanf("%19s", nid);
     clear_input_buffer();
 
-    // Fetch existing citizen data
+    
     char *fetch_sql = "SELECT * FROM citizens WHERE nid = ?;";
     sqlite3_stmt *fetch_stmt;
     Citizen existing;
@@ -373,7 +373,7 @@ void admin_update_citizen() {
     if (sqlite3_prepare_v2(db, fetch_sql, -1, &fetch_stmt, 0) == SQLITE_OK) {
         sqlite3_bind_text(fetch_stmt, 1, nid, -1, SQLITE_STATIC);
         if (sqlite3_step(fetch_stmt) == SQLITE_ROW) {
-            // Copy existing data (including NID)
+            
             strncpy(existing.nid, (const char*)sqlite3_column_text(fetch_stmt, 0), 20);
             strncpy(existing.name, (const char*)sqlite3_column_text(fetch_stmt, 1), MAX_NAME);
             strncpy(existing.dob, (const char*)sqlite3_column_text(fetch_stmt, 2), 11);
