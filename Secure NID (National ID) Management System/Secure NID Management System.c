@@ -12,7 +12,7 @@
 #define SALT_LEN 32
 #define ITERATIONS 10000
 
-typedef enum { ADMIN, OFFICER, AUDITOR } Role;
+typedef enum { ADMIN} Role;
 
 sqlite3 *db;
 char *DB_NAME = "national_id.db";
@@ -145,11 +145,11 @@ void input_citizen(Citizen *citizen, int is_new) {
     scanf(" %199[^\n]", citizen->address);
     clear_input_buffer();
 
-    printf("Father's Name: ");
+    printf("Father Name: ");
     scanf(" %99[^\n]", citizen->father_name);
     clear_input_buffer();
 
-    printf("Mother's Name: ");
+    printf("Mother Name: ");
     scanf(" %99[^\n]", citizen->mother_name);
     clear_input_buffer();
 
