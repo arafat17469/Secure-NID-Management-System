@@ -72,6 +72,10 @@ A **highly secure and efficient** National ID (NID) management system built in C
    ```sh
    gcc Secure_NID_Management_System.c -o nid_management.exe -lssl -lcrypto
    nid_management.exe
+   wsl --install
+   sudo apt update
+   sudo apt install gcc
+   
    ```
 
 ### 🍏 macOS Installation
